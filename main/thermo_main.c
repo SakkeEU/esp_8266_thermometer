@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "thermo.h"
 #include "thermo_wifi.h"
 #include "ds18b20.h"
@@ -7,9 +8,10 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "lwip/udp.h"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
-static void error_check(err_t err, char * err_message){
+static inline void error_check(err_t err, char * err_message){
 	
 	if(err < 0){
 		ESP_LOGE(TAG_SEND, "%s: %u", err_message, err);
@@ -55,6 +57,7 @@ void send_task(void *pvParameter){
 
 	//free stuff
 	udp_disconnect(thermo_udp);
+	free(ptr_m->m);
 	pbuf_free(packet);
 	
 	udp_remove(thermo_udp);
@@ -70,9 +73,8 @@ void ds18b20_task(void *pvParameter){
 	ds18b20_gpio_init();
 	
 	for(;;){
-		
 		uint8_t word[15] = {0};
-		uint8_t word_len;
+		uint8_t word_len = 0;
 		
 		//reset ds18b20
 		err_ds18b20 = ds18b20_reset();
@@ -95,34 +97,30 @@ void ds18b20_task(void *pvParameter){
 		//read scratchpad	
 		word_len = 2;
 		ds18b20_read_scratchpad(word, word_len);
-
-		uint16_t temps[2] = {0};
-		ds18b20_temp_printable(word, 12, temps);
 		
-		ESP_LOGD(TAG_DS_TASK, "TEMPERATURE: %u,%u", temps[0], temps[1]);
+		float temp = ds18b20_temp_to_float(word, 12);
 		
 		//prepare message to send
-		uint8_t str_len = snprintf(NULL, 0, "TEMP: %u.%u", temps[0], temps[1]);
+		uint8_t str_len = snprintf(NULL, 0, "%0.4f", temp);
 		str_len += 1;
 		char str[str_len];
-		snprintf(str, str_len, "TEMP: %u.%u", temps[0], temps[1]);
+		for(uint8_t i = 0; i < str_len; i++)
+			str[i] = 0;
+		snprintf(str, str_len, "%0.4f", temp);
 		
-		message_t message = {
-			.m = str,
-			.m_len = str_len
-		};
-		
-		ESP_LOGD(TAG_DS_TASK, "message to be sent: %s", message.m);
+		message_t message = {.m_len = str_len};
+		message.m = malloc(str_len);
+		memcpy(message.m, str, str_len);
 		message_t * ptr_m = &message;
 		
 		//create thermo_send task
-		xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdFALSE, pdTRUE, 25000 / portTICK_RATE_MS);
+		xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdFALSE, pdTRUE, 10000 / portTICK_RATE_MS);
 		if((xEventGroupGetBits(wifi_event_group) & CONNECTED_BIT) == 0) {
 			ESP_LOGE(TAG_DS_TASK, "CONNECTION TIMEOUT");
 			sleep_prep(TAG_MAIN);
 		}
 		//thermo_send(ptr_m);
-		xTaskCreate(&send_task, "send_task", 2048, (void *) ptr_m, 6, NULL);
+		xTaskCreate(&send_task, "send_task", 2048, (void *) ptr_m, 11, NULL);
 		vTaskDelay(1000 / portTICK_RATE_MS);
 	}
 }
@@ -135,7 +133,7 @@ void app_main(){
 	wifi_event_group = xEventGroupCreate();
     thermo_wifi();
     
-    xTaskCreate(&ds18b20_task, "ds18b20_task", 2048, NULL, 11, NULL);
+    xTaskCreate(&ds18b20_task, "ds18b20_task", 2048, NULL, 6, NULL);
     for(;;){
 		vTaskDelay(100000 / portTICK_RATE_MS);
 	}
