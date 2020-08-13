@@ -164,6 +164,7 @@ void ds18b20_read_rom(uint8_t * word){
 	ds18b20_read(word, 8);
 }
 
+//bytes order TH - TL - CONFIG
 void ds18b20_write_scratchpad(uint8_t * word){
 	
 	uint8_t cmd = 0x4E;
@@ -179,6 +180,14 @@ void ds18b20_read_scratchpad(uint8_t * word, uint8_t bytes_to_read){
 	ESP_LOGD(TAG_DS18B20, "read_scratchpad: BEh");
 	ds18b20_write(word, 1);
 	ds18b20_read(word, bytes_to_read);
+}
+
+void ds18b20_copy_scratchpad(void){
+	
+	uint8_t word[] = {0x48};
+	ESP_LOGD(TAG_DS18B20, "copy_scratchpad: 48h");
+	ds18b20_write(word, 1);
+	vTaskDelay(20 / portTICK_RATE_MS);
 }
 
 void ds18b20_convert(void){

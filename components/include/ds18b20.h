@@ -21,6 +21,7 @@ void ds18b20_skip_rom(void);
 void ds18b20_read_rom(uint8_t * word);
 void ds18b20_write_scratchpad(uint8_t * word);
 void ds18b20_read_scratchpad(uint8_t * word, uint8_t bytes_to_read);
+void ds18b20_copy_scratchpad(void);
 void ds18b20_convert(void);
 
 float ds18b20_temp_to_float(uint8_t * word, uint8_t bits);
