@@ -14,15 +14,15 @@ typedef enum{
 void ds18b20_write(uint8_t * word, uint8_t word_len);
 void ds18b20_read(uint8_t word[], uint8_t size);
 
-void ds18b20_gpio_init();
+void ds18b20_gpio_init(void);
 
-err_ds18b20_t ds18b20_reset();
-void ds18b20_skip_rom();
+err_ds18b20_t ds18b20_reset(void);
+void ds18b20_skip_rom(void);
 void ds18b20_read_rom(uint8_t * word);
 void ds18b20_write_scratchpad(uint8_t * word);
 void ds18b20_read_scratchpad(uint8_t * word, uint8_t bytes_to_read);
-void ds18b20_convert();
+void ds18b20_convert(void);
 
-void ds18b20_temp_printable(uint8_t * word, uint8_t bits, uint16_t * temps);
+float ds18b20_temp_to_float(uint8_t * word, uint8_t bits);
 
 #endif
