@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "thermo.h"
 #include "ds18b20.h"
 #include "freertos/FreeRTOS.h"
@@ -13,7 +14,7 @@ static gpio_num_t pin;
 
 static err_ds18b20_t ds18b20_wait(uint8_t wait_time, uint8_t wait_level){
 	
-	uint8_t level;
+	uint8_t level = 0;
 	wait_time += wait_time % 5;
 	
 	//wait until level == wait_level or wait_time == 0
@@ -64,9 +65,9 @@ static void ds18b20_write_byte(uint8_t byte){
 	}
 }
 
-static uint8_t ds18b20_read_bit(){
+static uint8_t ds18b20_read_bit(void){
 	
-	uint8_t bit;
+	uint8_t bit = 0;
 	
 	//read time slot 1us < ts < 15us
 	//then recovery time until 60us
@@ -85,7 +86,7 @@ static uint8_t ds18b20_read_bit(){
 	return bit;
 }
 
-static uint8_t ds18b20_read_byte(){
+static uint8_t ds18b20_read_byte(void){
 	
 	uint8_t byte = 0;
 	for(uint8_t i = 0x01; i; i <<= 1){
@@ -103,14 +104,14 @@ void ds18b20_write(uint8_t * word, uint8_t word_len){
 }
 
 
-void ds18b20_read(uint8_t word[], uint8_t word_len){
+void ds18b20_read(uint8_t * word, uint8_t word_len){
 	
 	for(uint8_t i = 0; i < word_len; i++){
 		word[i] = ds18b20_read_byte();
 	}
 }
 
-void ds18b20_gpio_init(){
+void ds18b20_gpio_init(void){
 	
 	pin = GPIO_NUM_0;
 	gpio_config_t conf = {
@@ -123,9 +124,9 @@ void ds18b20_gpio_init(){
 	ESP_ERROR_CHECK(gpio_config(&conf));
 }
 
-err_ds18b20_t ds18b20_reset(){
+err_ds18b20_t ds18b20_reset(void){
 	
-	err_ds18b20_t err;
+	err_ds18b20_t err = DS18B20_OK;
 	
 	ESP_LOGD(TAG_DS18B20, "ds18b20_reset");
 	//wait for the level to go up after gpio init
@@ -148,7 +149,7 @@ err_ds18b20_t ds18b20_reset(){
 	return err;
 }
 
-void ds18b20_skip_rom(){
+void ds18b20_skip_rom(void){
 	
 	uint8_t word[] = {0xCC};
 	ESP_LOGD(TAG_DS18B20, "skip_rom: CCh");
@@ -180,29 +181,25 @@ void ds18b20_read_scratchpad(uint8_t * word, uint8_t bytes_to_read){
 	ds18b20_read(word, bytes_to_read);
 }
 
-void ds18b20_convert(){
+void ds18b20_convert(void){
 	
 	uint8_t word[] = {0x44};
 	ESP_LOGD(TAG_DS18B20, "convert_T: 44h");
 	ds18b20_write(word, 1);
 }
 
-void ds18b20_temp_printable(uint8_t * word, uint8_t bits, uint16_t * temps){
+float ds18b20_temp_to_float(uint8_t * word, uint8_t bits){
 	
-	uint16_t floaties = 0;
+	int16_t temp_2s = word[0] | (word[1] << 8);
 	uint8_t n_floats = bits % 8;
-	uint16_t temp = word[0] | (word[1] << 8);
-	uint8_t negative = (temp >> ( bits - 1)) & 1;
+	int8_t temp_int8 = (int8_t)(temp_2s >> n_floats);
 	
-	if(!negative){
-		floaties = 5 * ((temp >> (n_floats - 1)) & 1);
-		temp >>= n_floats;
-		temps[0] = temp;
-		temps[1] = floaties;
-		return;
-	}else
-		//don't do negatives
-		return;	
+	float temp_f = (float)temp_int8;
+	for(int8_t i = 0; i < n_floats; i++){
+		if((temp_2s >> (n_floats - i)) & 1)
+			temp_f += powf(2, -(i + 1));
+	}
+	return temp_f;
 }
 
 
