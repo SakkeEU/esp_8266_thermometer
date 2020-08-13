@@ -1,4 +1,4 @@
-#include "app.h"
+#include "thermo.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "app.h"
+#include "thermo.h"
 #include "ds18b20.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

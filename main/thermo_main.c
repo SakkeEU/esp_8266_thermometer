@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "app.h"
-#include "app_wifi.h"
+#include "thermo.h"
+#include "thermo_wifi.h"
 #include "ds18b20.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -23,25 +23,25 @@ static void error_check(err_t err, char * err_message){
 void send_task(void *pvParameter){
 	
 	err_t udp_err;
-	struct udp_pcb * app_udp;
+	struct udp_pcb * thermo_udp;
 	
 	//allocate UDP Protocol Control Block
-	app_udp = udp_new();
-	if(app_udp == NULL) error_check(-1, "UDP PCB CANNOT BE ALLOCATED");
+	thermo_udp = udp_new();
+	if(thermo_udp == NULL) error_check(-1, "UDP PCB CANNOT BE ALLOCATED");
 	
 	//bind host ip and port to PCB
-	udp_err = udp_bind(app_udp, app_ip, 0);
+	udp_err = udp_bind(thermo_udp, thermo_ip, 0);
 	error_check(udp_err, "BIND ERROR");
 		
 	//prepare the remote ip
 	ip4_addr_t  ip4_addr_temp;
-	ip4_addr_t * app_udp_rip = & ip4_addr_temp;
-	IP_ADDR4(app_udp_rip, UDP_REMOTE_IP_BYTE3, UDP_REMOTE_IP_BYTE2, UDP_REMOTE_IP_BYTE1, UDP_REMOTE_IP_BYTE0);
+	ip4_addr_t * thermo_udp_rip = & ip4_addr_temp;
+	IP_ADDR4(thermo_udp_rip, UDP_REMOTE_IP_BYTE3, UDP_REMOTE_IP_BYTE2, UDP_REMOTE_IP_BYTE1, UDP_REMOTE_IP_BYTE0);
 	
 	ESP_LOGI(TAG_SEND, "SENDING...");	
 
 	//connect to remote ip	
-	udp_err = udp_connect(app_udp, app_udp_rip, UDP_REMOTE_PORT);
+	udp_err = udp_connect(thermo_udp, thermo_udp_rip, UDP_REMOTE_PORT);
 	error_check(udp_err, "CONNECTION ERROR");
 	
 	//prepare packet to send
@@ -50,14 +50,14 @@ void send_task(void *pvParameter){
 	pbuf_take(packet, ptr_m->m, ptr_m->m_len);
 
 	//send packet to remote
-	udp_err = udp_send(app_udp, packet);
+	udp_err = udp_send(thermo_udp, packet);
 	error_check(udp_err, "SEND ERROR");
 
 	//free stuff
-	udp_disconnect(app_udp);
+	udp_disconnect(thermo_udp);
 	pbuf_free(packet);
 	
-	udp_remove(app_udp);
+	udp_remove(thermo_udp);
 	ESP_LOGI(TAG_SEND, "SENDING DONE");	
 	vTaskDelete(NULL);
 }
@@ -115,13 +115,13 @@ void ds18b20_task(void *pvParameter){
 		ESP_LOGD(TAG_DS_TASK, "message to be sent: %s", message.m);
 		message_t * ptr_m = &message;
 		
-		//create app_send task
+		//create thermo_send task
 		xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdFALSE, pdTRUE, 25000 / portTICK_RATE_MS);
 		if((xEventGroupGetBits(wifi_event_group) & CONNECTED_BIT) == 0) {
 			ESP_LOGE(TAG_DS_TASK, "CONNECTION TIMEOUT");
 			sleep_prep(TAG_MAIN);
 		}
-		//app_send(ptr_m);
+		//thermo_send(ptr_m);
 		xTaskCreate(&send_task, "send_task", 2048, (void *) ptr_m, 6, NULL);
 		vTaskDelay(1000 / portTICK_RATE_MS);
 	}
@@ -133,7 +133,7 @@ void app_main(){
     ESP_ERROR_CHECK(nvs_flash_init());
 		
 	wifi_event_group = xEventGroupCreate();
-    app_wifi();
+    thermo_wifi();
     
     xTaskCreate(&ds18b20_task, "ds18b20_task", 2048, NULL, 11, NULL);
     for(;;){

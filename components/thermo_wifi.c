@@ -1,5 +1,5 @@
-#include "app.h"
-#include "app_wifi.h"
+#include "thermo.h"
+#include "thermo_wifi.h"
 #include "esp_event_loop.h"
 #include "esp_log.h"
 
@@ -19,7 +19,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event){
             ESP_LOGI(TAG_WIFI, "SYSTEM_EVENT_STA_GOT_IP");
             ESP_LOGI(TAG_WIFI, "Got IP: %s\n", ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
             
-            app_ip = &event->event_info.got_ip.ip_info.ip;
+            thermo_ip = &event->event_info.got_ip.ip_info.ip;
             
             xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
             xEventGroupClearBits(wifi_event_group, DISCONNECTED_BIT);
@@ -44,7 +44,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event){
     return ESP_OK;
 }
 
-void app_wifi(){
+void thermo_wifi(){
 	
 	tcpip_adapter_init();
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
