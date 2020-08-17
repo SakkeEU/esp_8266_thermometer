@@ -1,8 +1,6 @@
 #ifndef _APP_
 #define _APP_
 
-#include <stdint.h>
-
 #define TAG_WIFI "THERMO_WIFI"
 #define TAG_MAIN "THERMO_MAIN"
 #define TAG_SEND "SEND_TASK"
