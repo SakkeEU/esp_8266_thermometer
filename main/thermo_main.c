@@ -8,16 +8,14 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "lwip/udp.h"
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
 static inline void error_check(err_t err, char * err_message){
 	
 	if(err < 0){
 		ESP_LOGE(TAG_SEND, "%s: %u", err_message, err);
-		ESP_LOGI(TAG_SEND, "restarting in 3...");
-		vTaskDelay(3000 / portTICK_RATE_MS);
-		esp_restart();
+		sleep_prep(TAG_SEND);
 	}
 	return;
 }
@@ -40,7 +38,7 @@ void send_task(void *pvParameter){
 	ip4_addr_t * thermo_udp_rip = & ip4_addr_temp;
 	IP_ADDR4(thermo_udp_rip, UDP_REMOTE_IP_BYTE3, UDP_REMOTE_IP_BYTE2, UDP_REMOTE_IP_BYTE1, UDP_REMOTE_IP_BYTE0);
 	
-	ESP_LOGI(TAG_SEND, "SENDING...");	
+	ESP_LOGD(TAG_SEND, "SENDING...");	
 
 	//connect to remote ip	
 	udp_err = udp_connect(thermo_udp, thermo_udp_rip, UDP_REMOTE_PORT);
@@ -61,7 +59,7 @@ void send_task(void *pvParameter){
 	pbuf_free(packet);
 	
 	udp_remove(thermo_udp);
-	ESP_LOGI(TAG_SEND, "SENDING DONE");	
+	ESP_LOGD(TAG_SEND, "SENDING DONE");	
 	vTaskDelete(NULL);
 }
 
