@@ -36,19 +36,19 @@ static void ds18b20_write_bit(uint8_t bit){
 	gpio_set_direction(pin, GPIO_MODE_OUTPUT_OD);
 	if(bit){
 		taskENTER_CRITICAL();
-			gpio_set_level(pin, 0);
-			ets_delay_us(5);
-			
-			gpio_set_level(pin, 1);
-			ets_delay_us(60);
+		gpio_set_level(pin, 0);
+		ets_delay_us(5);
+		
+		gpio_set_level(pin, 1);
+		ets_delay_us(60);
 		taskEXIT_CRITICAL();
 	}else{
 		taskENTER_CRITICAL();
-			gpio_set_level(pin, 0);
-			ets_delay_us(65);
-			
-			gpio_set_level(pin, 1);
-			ets_delay_us(2);
+		gpio_set_level(pin, 0);
+		ets_delay_us(65);
+		
+		gpio_set_level(pin, 1);
+		ets_delay_us(2);
 		taskEXIT_CRITICAL();
 	}
 }
@@ -73,13 +73,13 @@ static uint8_t ds18b20_read_bit(void){
 	//then recovery time until 60us
 	gpio_set_direction(pin, GPIO_MODE_OUTPUT_OD);
 	taskENTER_CRITICAL();
-		gpio_set_level(pin, 0);
-		ets_delay_us(2);
-		gpio_set_level(pin, 1);
-		
-		gpio_set_direction(pin, GPIO_MODE_INPUT);
-		ets_delay_us(10);
-		bit = gpio_get_level(pin);
+	gpio_set_level(pin, 0);
+	ets_delay_us(2);
+	gpio_set_level(pin, 1);
+	
+	gpio_set_direction(pin, GPIO_MODE_INPUT);
+	ets_delay_us(10);
+	bit = gpio_get_level(pin);
 	taskEXIT_CRITICAL();
 	
 	ets_delay_us(55);
@@ -137,11 +137,11 @@ err_ds18b20_t ds18b20_reset(void){
 	//reset ds18b20 with a low level of 480us min duration
 	//and wait for presence pulse
 	taskENTER_CRITICAL();
-		gpio_set_level(pin, 0);
-		ets_delay_us(500);
-		
-		gpio_set_level(pin, 1);
-		err = ds18b20_wait(80, DS18B20LOW);
+	gpio_set_level(pin, 0);
+	ets_delay_us(500);
+	
+	gpio_set_level(pin, 1);
+	err = ds18b20_wait(80, DS18B20LOW);
 	taskEXIT_CRITICAL();
 	
 	//wait for presence pulse to end (240us max duration)
