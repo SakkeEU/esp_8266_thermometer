@@ -44,7 +44,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event){
     return ESP_OK;
 }
 
-void thermo_wifi(){
+void thermo_wifi(void){
 	
 	tcpip_adapter_init();
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));

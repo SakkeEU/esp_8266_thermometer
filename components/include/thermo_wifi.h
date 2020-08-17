@@ -7,13 +7,15 @@
 #define CONNECTED_BIT (1 << 0)
 #define DISCONNECTED_BIT (1 << 1)
 
+//set wiki ssid and pswd
 #define SSID_WIFI "-"
 #define PSWD_WIFI "-"
 
-#define UDP_REMOTE_IP_BYTE3 192
-#define UDP_REMOTE_IP_BYTE2 168
-#define UDP_REMOTE_IP_BYTE1 178
-#define UDP_REMOTE_IP_BYTE0 103
+//set udp server ip
+#define UDP_REMOTE_IP_BYTE3 0
+#define UDP_REMOTE_IP_BYTE2 0
+#define UDP_REMOTE_IP_BYTE1 0
+#define UDP_REMOTE_IP_BYTE0 0
 
 #define UDP_REMOTE_PORT 5005
 
@@ -25,6 +27,6 @@ typedef struct{
 EventGroupHandle_t wifi_event_group;
 ip4_addr_t * thermo_ip;
 
-void thermo_wifi();
+void thermo_wifi(void);
 
 #endif
